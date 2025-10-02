@@ -22,14 +22,11 @@ h1 {
     display: flex;
     align-items: center;
 }
-.logo {
-    /* Placeholder for a small logo - you can replace with an actual image */
-    width: 30px;
+.header-logo {
+    width: 30px; /* Adjust size as needed */
     height: 30px;
-    background-color: #555;
-    border-radius: 4px;
     margin-right: 10px;
-    display: inline-block;
+    vertical-align: middle;
 }
 p {
     line-height: 1.6;
