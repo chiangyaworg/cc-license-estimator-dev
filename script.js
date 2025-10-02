@@ -94,14 +94,10 @@ function calculateLicenses() {
     if (features.posture && !features.runtime) {
         // Scenario: Only Posture Security is ticked
         if (posture_workload_sum > 0) {
-            // Updated Logic: If workload is > 0, the license is the max of the workload sum or 200.
+            // If workload is > 0, the license is the max of the workload sum or 200.
             postureLicense = Math.max(posture_workload_sum, 200);
         } else {
             postureLicense = 0;
-        }
-
-        if (postureLicense > 0) {
-            resultString.push(`Posture Security License Required: ${postureLicense}`);
         }
 
     } else if (features.runtime || (features.posture && features.runtime)) {
@@ -115,8 +111,6 @@ function calculateLicenses() {
         } else if (total_workload_sum > 200) {
             // Rule 2: Both are <= 200, but total is > 200
             // Follow the prompt's ambiguous/circular rule:
-            // Posture: (total_workload_sum - posture_workload_sum) which equals runtime_workload_sum
-            // Runtime: runtime_workload_sum
             postureLicense = runtime_workload_sum;
             runtimeLicense = runtime_workload_sum;
             
@@ -124,35 +118,49 @@ function calculateLicenses() {
             // Rule 3: Total is less than 200 (but must be greater than 0)
             // "Runtime Security License Required: 200"
             runtimeLicense = 200; 
-            postureLicense = 0; // Posture is not set to 200 in this clause
+            postureLicense = 0; 
         } else {
             // Total workload is 0
             postureLicense = 0;
             runtimeLicense = 0;
         }
-
-        if (postureLicense > 0) {
-            resultString.push(`Posture Security License Required: ${postureLicense}`);
-        }
-        if (runtimeLicense > 0) {
-            resultString.push(`Runtime Security License Required: ${runtimeLicense}`);
+    }
+    
+    // --- Step 3: Apply Cloud ASM Multiplier (if selected) and add ASM license line ---
+    let asmLicenseLine = '';
+    if (features.cloudAsm) {
+        const multiplier = 1.25;
+        // Apply multiplier and round up the core licenses
+        postureLicense = Math.ceil(postureLicense * multiplier);
+        runtimeLicense = Math.ceil(runtimeLicense * multiplier);
+        
+        // Save the Cloud ASM license line separately
+        if (unmanaged_assets_sum > 0) {
+            asmLicenseLine = `Cloud ASM License Required: ${unmanaged_assets_sum}`;
         }
     }
 
+    // --- Step 4: Output Core Security Licenses (THIS WAS THE MISSING STEP) ---
+    if (postureLicense > 0) {
+        resultString.push(`Posture Security License Required: ${postureLicense}`);
+    }
+    if (runtimeLicense > 0) {
+        resultString.push(`Runtime Security License Required: ${runtimeLicense}`);
+    }
 
-    // --- Application Security Add-on ---
+
+    // --- Step 5: Application Security Add-on ---
     if (features.application && coreSecuritySelected) {
         // AppSec license is min 5 or the developer sum
         const appSecLicense = developer_sum > 5 ? developer_sum : 5;
         resultString.push(`Application Security License Required: ${appSecLicense}`);
     }
 
-    // --- Cloud ASM ---
-    if (features.cloudAsm) {
-         if (unmanaged_assets_sum > 0) {
-            resultString.push(`Cloud ASM License Required: ${unmanaged_assets_sum}`);
-        }
+    // --- Step 6: Add Cloud ASM License Line to the end if it exists ---
+    if (asmLicenseLine) {
+        resultString.push(asmLicenseLine);
     }
+
 
     // --- Final Output ---
     if (resultString.length === 0) {
