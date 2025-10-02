@@ -1,0 +1,107 @@
+/* Dark Theme Styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1e1e1e;
+    color: #ffffff;
+    margin: 0;
+    padding: 20px;
+}
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #252526;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+h1 {
+    color: #4CAF50; /* A greenish color for the title */
+    border-bottom: 2px solid #383838;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+.logo {
+    /* Placeholder for a small logo - you can replace with an actual image */
+    width: 30px;
+    height: 30px;
+    background-color: #555;
+    border-radius: 4px;
+    margin-right: 10px;
+    display: inline-block;
+}
+p {
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: #cccccc;
+}
+.section-title {
+    color: #4CAF50;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+.feature-options label {
+    margin-right: 20px;
+    display: inline-block;
+    cursor: pointer;
+}
+.input-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 5px 0;
+    border-bottom: 1px dashed #383838;
+}
+.input-group label {
+    flex-basis: 70%;
+}
+.input-group input[type="number"] {
+    flex-basis: 25%;
+    padding: 8px;
+    border: 1px solid #383838;
+    border-radius: 4px;
+    background-color: #333333;
+    color: #ffffff;
+    text-align: right;
+    -moz-appearance: textfield; /* Firefox hide arrows */
+}
+/* Hide arrows for Chrome, Safari, Edge */
+.input-group input[type="number"]::-webkit-outer-spin-button,
+.input-group input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+#calculate-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 20px;
+    width: 100%;
+    transition: background-color 0.3s;
+}
+#calculate-btn:hover {
+    background-color: #45a049;
+}
+#results-section {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #333333;
+    border-radius: 4px;
+    white-space: pre-wrap; /* To handle newlines from JS */
+    min-height: 50px;
+    font-size: 1.1em;
+    color: #4CAF50;
+    border: 1px solid #4CAF50;
+}
+.error {
+    color: #FF6347; /* Tomato red for errors */
+    font-weight: bold;
+}
