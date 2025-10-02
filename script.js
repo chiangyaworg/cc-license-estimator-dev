@@ -93,9 +93,13 @@ function calculateLicenses() {
     
     if (features.posture && !features.runtime) {
         // Scenario: Only Posture Security is ticked
-        if (posture_workload_sum > 0) {
-            // If workload is > 0, the license is the max of the workload sum or 200.
-            postureLicense = Math.max(posture_workload_sum, 200);
+        
+        // NEW LOGIC: Add runtime_workload_sum to the posture workload
+        let effectivePostureWorkload = posture_workload_sum + runtime_workload_sum;
+
+        if (effectivePostureWorkload > 0) {
+            // If total effective workload is > 0, the license is the max of the effective workload sum or 200.
+            postureLicense = Math.max(effectivePostureWorkload, 200);
         } else {
             postureLicense = 0;
         }
@@ -140,7 +144,7 @@ function calculateLicenses() {
         }
     }
 
-    // --- Step 4: Output Core Security Licenses (THIS WAS THE MISSING STEP) ---
+    // --- Step 4: Output Core Security Licenses ---
     if (postureLicense > 0) {
         resultString.push(`Posture Security License Required: ${postureLicense}`);
     }
