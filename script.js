@@ -18,24 +18,22 @@ function openTab(evt, tabName) {
     // Show the current tab, and add an "active" class to the button that opened the tab
     document.getElementById(tabName).style.display = "block";
     document.getElementById(tabName).classList.add("active-tab");
-    evt.currentTarget.classList.add("active");
+    
+    // Add 'active' class to the current target (the button) only if the event exists
+    if (evt) {
+        evt.currentTarget.classList.add("active");
+    }
 }
 
 // Set 'Estimator' as the default active tab on load
 document.addEventListener('DOMContentLoaded', () => {
-    // Hide all tabs first
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.style.display = 'none';
-        tab.classList.remove('active-tab');
-    });
+    // FIX: Call the openTab function directly with a null event 
+    // and the default tab name to ensure the state is set correctly.
+    openTab(null, 'Estimator'); 
 
-    // Explicitly show the default tab and set the active button (using the new ID: Estimator)
-    const defaultTab = document.getElementById('Estimator');
-    const defaultButton = document.querySelector('.tab-button'); // Assumes the first button is the default
-
-    if (defaultTab && defaultButton) {
-        defaultTab.style.display = 'block';
-        defaultTab.classList.add('active-tab');
+    // Manually set the active class on the first button (Estimator) since the event is null
+    const defaultButton = document.querySelector('.tab-button');
+    if (defaultButton) {
         defaultButton.classList.add('active');
     }
 });
@@ -58,7 +56,6 @@ function calculateLicenses() {
         'dbaas-tb-stored': 1,                    // 1 TB Stored = 1 Workload
         'saas-users': 1 / 10,                    // 10 SaaS Users = 1 Workload
         'container-images': 1 / 10,              // 10 container image scans = 1 Workload (beyond free quota)
-        // 'unmanaged-assets' ratio removed
     };
 
     // --- Get Input Values ---
@@ -73,7 +70,6 @@ function calculateLicenses() {
         'dbaas-tb-stored': parseInt(document.getElementById('dbaas-tb-stored').value) || 0,
         'saas-users': parseInt(document.getElementById('saas-users').value) || 0,
         'developers': parseInt(document.getElementById('developers').value) || 0,
-        // 'unmanaged-assets' input removed
     };
 
     // --- Get Ticked Features ---
@@ -104,7 +100,6 @@ function calculateLicenses() {
     const posture_workload_sum = Math.ceil(postureWorkloadUnits);
     const runtime_workload_sum = Math.ceil(runtimeWorkloadUnits);
     const developer_sum = inputs['developers'];
-    // const unmanaged_assets_sum removed
     const total_workload_sum = posture_workload_sum + runtime_workload_sum;
 
     let resultString = [];
@@ -127,7 +122,7 @@ function calculateLicenses() {
     
     if (features.posture && !features.runtime) {
         // Scenario: Only Posture Security is ticked
-        // If Posture only, add runtime_workload_sum into postureLicense
+        // Add runtime_workload_sum into postureLicense
         let effectivePostureWorkload = posture_workload_sum + runtime_workload_sum;
 
         if (effectivePostureWorkload > 0) {
@@ -165,8 +160,6 @@ function calculateLicenses() {
         // Apply multiplier and round up the core licenses
         postureLicense = Math.ceil(postureLicense * multiplier);
         runtimeLicense = Math.ceil(runtimeLicense * multiplier);
-        
-        // Cloud ASM license line logic removed
     }
 
     // --- Step 4: Output Core Security Licenses ---
@@ -183,8 +176,6 @@ function calculateLicenses() {
         const appSecLicense = developer_sum > 5 ? developer_sum : 5;
         resultString.push(`Application Security License Required: ${appSecLicense}`);
     }
-
-    // --- Step 6: Cloud ASM License Line removed ---
 
 
     // --- Final Output ---
