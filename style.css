@@ -36,42 +36,56 @@ p {
 
 /* --- Tab Styles --- */
 .tabs {
-    border-bottom: 1px solid #4CAF50;
-    margin-bottom: 20px;
+    /* Remove default bottom border and spacing for seamless look */
+    border-bottom: none;
+    margin-bottom: 0; 
     display: flex;
     overflow-x: auto;
+    /* Match background of the container */
+    background-color: #252526; 
+    padding-left: 0;
+    padding-top: 10px;
 }
 .tab-button {
-    background-color: inherit;
-    color: #ffffff;
-    float: left;
-    border: none;
+    background-color: #333333; /* Slightly lighter gray than container */
+    color: #cccccc;
+    border: 1px solid #333333; /* Use the same color for border initially */
+    border-bottom: none; /* Crucial for connection effect */
     outline: none;
     cursor: pointer;
-    padding: 14px 16px;
-    transition: 0.3s;
+    padding: 10px 18px;
+    transition: all 0.2s;
     font-size: 1em;
     border-top-left-radius: 6px;
     border-top-right-radius: 6px;
-    border-bottom: 3px solid transparent;
+    margin-right: 2px; /* Small gap between buttons */
 }
-.tab-button:hover {
+.tab-button:hover:not(.active) {
     background-color: #383838;
+    color: #ffffff;
 }
 .tab-button.active {
-    background-color: #252526;
-    border-bottom: 3px solid #4CAF50; /* Active tab indicator */
+    background-color: #252526; /* Match container background */
+    color: #4CAF50; /* Highlight active text */
+    /* Use a top/side border for definition, but the bottom border matches the container */
+    border-top: 1px solid #4CAF50;
+    border-left: 1px solid #4CAF50;
+    border-right: 1px solid #4CAF50;
+    border-bottom: 1px solid #252526; /* Hides the button bottom to look connected */
+    margin-bottom: -1px; /* Overlap slightly with content border */
 }
+
 .tab-content {
     display: none; /* Hide all content by default */
-    padding: 6px 0;
-    border-top: none;
+    padding: 20px 0 0 0; /* Add top padding to move content down, matching the tab buttons */
+    /* Add a solid border only on the top to separate content from tabs */
+    border-top: 1px solid #4CAF50; 
 }
 .active-tab {
     display: block; /* Show active tab content */
 }
 
-/* --- Content Styles --- */
+/* --- Content Styles (mostly retained) --- */
 .section-title {
     color: #4CAF50;
     margin-top: 20px;

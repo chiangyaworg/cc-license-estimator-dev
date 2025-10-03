@@ -23,10 +23,21 @@ function openTab(evt, tabName) {
 
 // Set 'License Estimator' as the default active tab on load
 document.addEventListener('DOMContentLoaded', () => {
-    // Manually trigger the click on the default button or set classes
-    document.getElementById('LicenseEstimator').style.display = 'block';
-    document.querySelector('.tab-button').classList.add('active');
-    document.getElementById('LicenseEstimator').classList.add("active-tab");
+    // Hide all tabs first
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.style.display = 'none';
+        tab.classList.remove('active-tab');
+    });
+
+    // Explicitly show the default tab and set the active button
+    const defaultTab = document.getElementById('LicenseEstimator');
+    const defaultButton = document.querySelector('.tab-button'); // Assumes the first button is the default
+
+    if (defaultTab && defaultButton) {
+        defaultTab.style.display = 'block';
+        defaultTab.classList.add('active-tab');
+        defaultButton.classList.add('active');
+    }
 });
 
 // Attach calculation function to the form submit event
@@ -116,7 +127,7 @@ function calculateLicenses() {
     
     if (features.posture && !features.runtime) {
         // Scenario: Only Posture Security is ticked
-        // If Posture only, add runtime_workload_sum into postureLicense
+        // Add runtime_workload_sum into postureLicense
         let effectivePostureWorkload = posture_workload_sum + runtime_workload_sum;
 
         if (effectivePostureWorkload > 0) {
