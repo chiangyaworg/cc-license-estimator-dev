@@ -21,7 +21,7 @@ function openTab(evt, tabName) {
     evt.currentTarget.classList.add("active");
 }
 
-// Set 'License Estimator' as the default active tab on load
+// Set 'Estimator' as the default active tab on load
 document.addEventListener('DOMContentLoaded', () => {
     // Hide all tabs first
     document.querySelectorAll('.tab-content').forEach(tab => {
@@ -29,8 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
         tab.classList.remove('active-tab');
     });
 
-    // Explicitly show the default tab and set the active button
-    const defaultTab = document.getElementById('LicenseEstimator');
+    // Explicitly show the default tab and set the active button (using the new ID: Estimator)
+    const defaultTab = document.getElementById('Estimator');
     const defaultButton = document.querySelector('.tab-button'); // Assumes the first button is the default
 
     if (defaultTab && defaultButton) {
@@ -58,7 +58,7 @@ function calculateLicenses() {
         'dbaas-tb-stored': 1,                    // 1 TB Stored = 1 Workload
         'saas-users': 1 / 10,                    // 10 SaaS Users = 1 Workload
         'container-images': 1 / 10,              // 10 container image scans = 1 Workload (beyond free quota)
-        'unmanaged-assets': 1 / 4                // 4 Unmanaged Assets = 1 Workload
+        // 'unmanaged-assets' ratio removed
     };
 
     // --- Get Input Values ---
@@ -73,7 +73,7 @@ function calculateLicenses() {
         'dbaas-tb-stored': parseInt(document.getElementById('dbaas-tb-stored').value) || 0,
         'saas-users': parseInt(document.getElementById('saas-users').value) || 0,
         'developers': parseInt(document.getElementById('developers').value) || 0,
-        'unmanaged-assets': parseInt(document.getElementById('unmanaged-assets').value) || 0
+        // 'unmanaged-assets' input removed
     };
 
     // --- Get Ticked Features ---
@@ -104,7 +104,7 @@ function calculateLicenses() {
     const posture_workload_sum = Math.ceil(postureWorkloadUnits);
     const runtime_workload_sum = Math.ceil(runtimeWorkloadUnits);
     const developer_sum = inputs['developers'];
-    const unmanaged_assets_sum = Math.ceil(inputs['unmanaged-assets'] * RATIOS['unmanaged-assets']);
+    // const unmanaged_assets_sum removed
     const total_workload_sum = posture_workload_sum + runtime_workload_sum;
 
     let resultString = [];
@@ -127,7 +127,7 @@ function calculateLicenses() {
     
     if (features.posture && !features.runtime) {
         // Scenario: Only Posture Security is ticked
-        // Add runtime_workload_sum into postureLicense
+        // If Posture only, add runtime_workload_sum into postureLicense
         let effectivePostureWorkload = posture_workload_sum + runtime_workload_sum;
 
         if (effectivePostureWorkload > 0) {
@@ -159,18 +159,14 @@ function calculateLicenses() {
         }
     }
     
-    // --- Step 3: Apply Cloud ASM Multiplier (if selected) and add ASM license line ---
-    let asmLicenseLine = '';
+    // --- Step 3: Apply Cloud ASM Multiplier (if selected) ---
     if (features.cloudAsm) {
         const multiplier = 1.25;
         // Apply multiplier and round up the core licenses
         postureLicense = Math.ceil(postureLicense * multiplier);
         runtimeLicense = Math.ceil(runtimeLicense * multiplier);
         
-        // Save the Cloud ASM license line separately
-        if (unmanaged_assets_sum > 0) {
-            asmLicenseLine = `Cloud ASM License Required: ${unmanaged_assets_sum}`;
-        }
+        // Cloud ASM license line logic removed
     }
 
     // --- Step 4: Output Core Security Licenses ---
@@ -188,10 +184,7 @@ function calculateLicenses() {
         resultString.push(`Application Security License Required: ${appSecLicense}`);
     }
 
-    // --- Step 6: Add Cloud ASM License Line to the end if it exists ---
-    if (asmLicenseLine) {
-        resultString.push(asmLicenseLine);
-    }
+    // --- Step 6: Cloud ASM License Line removed ---
 
 
     // --- Final Output ---
