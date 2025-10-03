@@ -23,7 +23,7 @@ h1 {
     align-items: center;
 }
 .header-logo {
-    width: 30px; /* Adjust size as needed */
+    width: 30px; 
     height: 30px;
     margin-right: 10px;
     vertical-align: middle;
@@ -33,6 +33,45 @@ p {
     margin-bottom: 20px;
     color: #cccccc;
 }
+
+/* --- Tab Styles --- */
+.tabs {
+    border-bottom: 1px solid #4CAF50;
+    margin-bottom: 20px;
+    display: flex;
+    overflow-x: auto;
+}
+.tab-button {
+    background-color: inherit;
+    color: #ffffff;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    font-size: 1em;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom: 3px solid transparent;
+}
+.tab-button:hover {
+    background-color: #383838;
+}
+.tab-button.active {
+    background-color: #252526;
+    border-bottom: 3px solid #4CAF50; /* Active tab indicator */
+}
+.tab-content {
+    display: none; /* Hide all content by default */
+    padding: 6px 0;
+    border-top: none;
+}
+.active-tab {
+    display: block; /* Show active tab content */
+}
+
+/* --- Content Styles --- */
 .section-title {
     color: #4CAF50;
     margin-top: 20px;
@@ -63,9 +102,8 @@ p {
     background-color: #333333;
     color: #ffffff;
     text-align: right;
-    -moz-appearance: textfield; /* Firefox hide arrows */
+    -moz-appearance: textfield;
 }
-/* Hide arrows for Chrome, Safari, Edge */
 .input-group input[type="number"]::-webkit-outer-spin-button,
 .input-group input[type="number"]::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -92,13 +130,24 @@ p {
     padding: 20px;
     background-color: #333333;
     border-radius: 4px;
-    white-space: pre-wrap; /* To handle newlines from JS */
+    white-space: pre-wrap;
     min-height: 50px;
     font-size: 1.1em;
     color: #4CAF50;
     border: 1px solid #4CAF50;
 }
 .error {
-    color: #FF6347; /* Tomato red for errors */
+    color: #FF6347;
     font-weight: bold;
+}
+.question-list {
+    list-style-type: disc;
+    padding-left: 25px;
+    color: #cccccc;
+}
+.question-list li {
+    margin-bottom: 10px;
+}
+.question-list li strong {
+    color: #ffffff;
 }

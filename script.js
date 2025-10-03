@@ -1,3 +1,35 @@
+// Function to handle tab switching
+function openTab(evt, tabName) {
+    var i, tabcontent, tablinks;
+
+    // Get all elements with class="tab-content" and hide them
+    tabcontent = document.getElementsByClassName("tab-content");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+        tabcontent[i].classList.remove("active-tab");
+    }
+
+    // Get all elements with class="tab-button" and remove the "active" class
+    tablinks = document.getElementsByClassName("tab-button");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+    }
+
+    // Show the current tab, and add an "active" class to the button that opened the tab
+    document.getElementById(tabName).style.display = "block";
+    document.getElementById(tabName).classList.add("active-tab");
+    evt.currentTarget.classList.add("active");
+}
+
+// Set 'License Estimator' as the default active tab on load
+document.addEventListener('DOMContentLoaded', () => {
+    // Manually trigger the click on the default button or set classes
+    document.getElementById('LicenseEstimator').style.display = 'block';
+    document.querySelector('.tab-button').classList.add('active');
+    document.getElementById('LicenseEstimator').classList.add("active-tab");
+});
+
+// Attach calculation function to the form submit event
 document.getElementById('estimator-form').addEventListener('submit', function(e) {
     e.preventDefault();
     calculateLicenses();
@@ -42,18 +74,15 @@ function calculateLicenses() {
     };
 
     const resultsElement = document.getElementById('results-section');
-    resultsElement.innerHTML = ''; // Clear previous results
+    resultsElement.innerHTML = ''; 
 
     // --- Step 1: Calculate Workloads ---
-
-    // Posture Workloads
     const postureWorkloadUnits = 
         (inputs['cloud-buckets'] * RATIOS['cloud-buckets']) +
         (inputs['managed-cloud-database'] * RATIOS['managed-cloud-database']) +
         (inputs['dbaas-tb-stored'] * RATIOS['dbaas-tb-stored']) +
         (inputs['saas-users'] * RATIOS['saas-users']);
     
-    // Runtime Workloads
     const runtimeWorkloadUnits = 
         (inputs['vms-not-running-containers'] * RATIOS['vms-not-running-containers']) +
         (inputs['vms-running-containers'] * RATIOS['vms-running-containers']) +
@@ -61,7 +90,6 @@ function calculateLicenses() {
         (inputs['serverless-functions'] * RATIOS['serverless-functions']) +
         (inputs['container-images'] * RATIOS['container-images']);
 
-    // Round up to the nearest whole number
     const posture_workload_sum = Math.ceil(postureWorkloadUnits);
     const runtime_workload_sum = Math.ceil(runtimeWorkloadUnits);
     const developer_sum = inputs['developers'];
@@ -69,19 +97,14 @@ function calculateLicenses() {
     const total_workload_sum = posture_workload_sum + runtime_workload_sum;
 
     let resultString = [];
-
-    // Flag to check if any core feature is selected (Posture or Runtime)
     const coreSecuritySelected = features.posture || features.runtime;
 
     // --- Step 2: Apply Logic based on Ticked Features ---
-
-    // A. Check for no features ticked
     if (!features.posture && !features.runtime && !features.application && !features.cloudAsm) {
         resultsElement.innerHTML = '<span class="error">None of the features are chosen, please try again</span>';
         return;
     }
 
-    // B. Check for Application Security alone
     if (features.application && !features.posture && !features.runtime) {
         resultsElement.innerHTML = '<span class="error">Application Security can only be added as add-ons, on top of Posture Security or Runtime Security</span>';
         return;
@@ -93,12 +116,10 @@ function calculateLicenses() {
     
     if (features.posture && !features.runtime) {
         // Scenario: Only Posture Security is ticked
-        
-        // NEW LOGIC: Add runtime_workload_sum to the posture workload
+        // If Posture only, add runtime_workload_sum into postureLicense
         let effectivePostureWorkload = posture_workload_sum + runtime_workload_sum;
 
         if (effectivePostureWorkload > 0) {
-            // If total effective workload is > 0, the license is the max of the effective workload sum or 200.
             postureLicense = Math.max(effectivePostureWorkload, 200);
         } else {
             postureLicense = 0;
@@ -113,18 +134,15 @@ function calculateLicenses() {
             runtimeLicense = runtime_workload_sum;
             
         } else if (total_workload_sum > 200) {
-            // Rule 2: Both are <= 200, but total is > 200
-            // Follow the prompt's ambiguous/circular rule:
+            // Rule 2: Both are <= 200, but total is > 200 (Ambiguous/circular rule)
             postureLicense = runtime_workload_sum;
             runtimeLicense = runtime_workload_sum;
             
         } else if (total_workload_sum > 0) { 
             // Rule 3: Total is less than 200 (but must be greater than 0)
-            // "Runtime Security License Required: 200"
             runtimeLicense = 200; 
             postureLicense = 0; 
         } else {
-            // Total workload is 0
             postureLicense = 0;
             runtimeLicense = 0;
         }
@@ -155,7 +173,6 @@ function calculateLicenses() {
 
     // --- Step 5: Application Security Add-on ---
     if (features.application && coreSecuritySelected) {
-        // AppSec license is min 5 or the developer sum
         const appSecLicense = developer_sum > 5 ? developer_sum : 5;
         resultString.push(`Application Security License Required: ${appSecLicense}`);
     }

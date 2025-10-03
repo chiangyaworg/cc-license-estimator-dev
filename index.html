@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cortex Cloud License Estimator</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/png" href="cortex-logo.png"> 
 </head>
 <body>
 
@@ -17,68 +16,107 @@
 
         <p>This is an unofficial web application to help Palo Alto Networks sellers to estimate the license required for Cortex Cloud consumption. The calculator will not provide a price estimation. Once completed, take the number of license count, and complete the quote on SFDC.</p>
         
-        <form id="estimator-form">
-            <div class="section-title">Features</div>
-            <div class="feature-options">
-                <label><input type="checkbox" name="feature" value="posture" id="feature-posture"> Posture Security</label>
-                <label><input type="checkbox" name="feature" value="runtime" id="feature-runtime"> Runtime Security</label>
-                <label><input type="checkbox" name="feature" value="application" id="feature-application"> Application Security</label>
-                <label><input type="checkbox" name="feature" value="cloud-asm" id="feature-cloud-asm"> Cloud ASM</label>
-            </div>
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'LicenseEstimator')">License Estimator</button>
+            <button class="tab-button" onclick="openTab(event, 'SizingQuestions')">Sizing Questions</button>
+            <button class="tab-button" onclick="openTab(event, 'SizingScript')">Sizing Script</button>
+            <button class="tab-button" onclick="openTab(event, 'About')">About</button>
+        </div>
 
-            <div class="section-title">Workload Quantities</div>
-            
-            <div class="input-group">
-                <label for="vms-not-running-containers">VMs (not running containers)</label>
-                <input type="number" id="vms-not-running-containers" value="0" min="0">
-            </div>
-            <div class="input-group">
-                <label for="vms-running-containers">VMs (running containers)</label>
-                <input type="number" id="vms-running-containers" value="0" min="0">
-            </div>
-            <div class="input-group">
-                <label for="caas-managed-containers">CaaS (Managed Containers)</label>
-                <input type="number" id="caas-managed-containers" value="0" min="0">
-            </div>
-            <div class="input-group">
-                <label for="serverless-functions">Serverless Functions</label>
-                <input type="number" id="serverless-functions" value="0" min="0">
-            </div>
-            <div class="input-group">
-                <label for="container-images">Container Images in Registries</label>
-                <input type="number" id="container-images" value="0" min="0">
-            </div>
-            <div class="input-group">
-                <label for="cloud-buckets">Cloud Buckets</label>
-                <input type="number" id="cloud-buckets" value="0" min="0">
-            </div>
-            <div class="input-group">
-                <label for="managed-cloud-database">Managed Cloud Database (PaaS)</label>
-                <input type="number" id="managed-cloud-database" value="0" min="0">
-            </div>
-            <div class="input-group">
-                <label for="dbaas-tb-stored">DBaaS (TB Stored)</label>
-                <input type="number" id="dbaas-tb-stored" value="0" min="0">
-            </div>
-            <div class="input-group">
-                <label for="saas-users">SaaS Users</label>
-                <input type="number" id="saas-users" value="0" min="0">
-            </div>
-            <div class="input-group">
-                <label for="developers">Developers</label>
-                <input type="number" id="developers" value="0" min="0">
-            </div>
-            <div class="input-group">
-                <label for="unmanaged-assets">Cloud ASM - Unmanaged Assets (for ASM only)</label>
-                <input type="number" id="unmanaged-assets" value="0" min="0">
-            </div>
+        <div id="LicenseEstimator" class="tab-content active-tab">
+            <form id="estimator-form">
+                <div class="section-title">Features</div>
+                <div class="feature-options">
+                    <label><input type="checkbox" name="feature" value="posture" id="feature-posture"> Posture Security</label>
+                    <label><input type="checkbox" name="feature" value="runtime" id="feature-runtime"> Runtime Security</label>
+                    <label><input type="checkbox" name="feature" value="application" id="feature-application"> Application Security</label>
+                    <label><input type="checkbox" name="feature" value="cloud-asm" id="feature-cloud-asm"> Cloud ASM</label>
+                </div>
 
-            <button type="submit" id="calculate-btn">Calculate License</button>
-        </form>
+                <div class="section-title">Workload Quantities</div>
+                
+                <div class="input-group">
+                    <label for="vms-not-running-containers">VMs (not running containers)</label>
+                    <input type="number" id="vms-not-running-containers" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="vms-running-containers">VMs (running containers)</label>
+                    <input type="number" id="vms-running-containers" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="caas-managed-containers">CaaS (Managed Containers)</label>
+                    <input type="number" id="caas-managed-containers" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="serverless-functions">Serverless Functions</label>
+                    <input type="number" id="serverless-functions" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="container-images">Container Images in Registries</label>
+                    <input type="number" id="container-images" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="cloud-buckets">Cloud Buckets</label>
+                    <input type="number" id="cloud-buckets" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="managed-cloud-database">Managed Cloud Database (PaaS)</label>
+                    <input type="number" id="managed-cloud-database" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="dbaas-tb-stored">DBaaS (TB Stored)</label>
+                    <input type="number" id="dbaas-tb-stored" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="saas-users">SaaS Users</label>
+                    <input type="number" id="saas-users" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="developers">Developers</label>
+                    <input type="number" id="developers" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="unmanaged-assets">Cloud ASM - Unmanaged Assets (for ASM only)</label>
+                    <input type="number" id="unmanaged-assets" value="0" min="0">
+                </div>
 
-        <div class="section-title">Results</div>
-        <div id="results-section">
-            Click "Calculate License" to see the estimated license count.
+                <button type="submit" id="calculate-btn">Calculate License</button>
+            </form>
+
+            <div class="section-title">Results</div>
+            <div id="results-section">
+                Click "Calculate License" to see the estimated license count.
+            </div>
+        </div>
+
+        <div id="SizingQuestions" class="tab-content">
+            <div class="section-title">Sizing Questions</div>
+            <p>Here are some questions to help a customer to estimate the number of license required for Cortex Cloud:</p>
+            <ul class="question-list">
+                <li><strong>What are the key capabilities that are required?</strong> (Posture Security, Runtime Security, AppSec)</li>
+                <li><strong>What are the Cloud Service Providers (CSP) currently in use?</strong> (AWS, Azure, GCP, OCI)</li>
+                <li>How many **VMs** in the cloud environment that are **not running containers**?</li>
+                <li>How many **VMs** in the cloud environment that are **running containers** (AWS EKS, Azure AKS, etc, count by worker nodes)?</li>
+                <li>How many **Containers as a Service** are running in the cloud environment (AWS Fargate, etc, count by service)?</li>
+                <li>How many **serverless functions** in the cloud environment (AWS Lambda, Azure Functions, etc)?</li>
+                <li>How many **container images** are stored in the registry (AWS ECR, Azure Container Registry, Google Artifact Registry, etc)?</li>
+                <li>How many **storage buckets** in the cloud (AWS S3, Azure Blob Storage, Google Storage Bucket, etc)?</li>
+                <li>How many **managed cloud databases** in the cloud environment (AWS RDS, DynamoDB, Aurora)?</li>
+                <li>How many **developers (git committers)** that you have in your environment?</li>
+                <li>Is there any **expectation on growth** over the next few years? (multi-year contract)</li>
+            </ul>
+        </div>
+
+        <div id="SizingScript" class="tab-content">
+            <div class="section-title">Sizing Script</div>
+            <p>While the estimator above provides a manual calculation, the most accurate method to determine license count is by using an automated script.</p>
+            <p>Access the official **CC Sizing Scripts** here:</p>
+            <p><a href="https://github.com/chiangyaw/cc-sizing-scripts" target="_blank">https://github.com/chiangyaw/cc-sizing-scripts</a></p>
+        </div>
+
+        <div id="About" class="tab-content">
+            <div class="section-title">About This Tool</div>
+            <p>This license estimator is maintained by a Domain Consultant based out of Singapore. If you have any feedback or recommendation, feel free to reach out to your Palo Alto Networks sales representative.</p>
         </div>
     </div>
 
