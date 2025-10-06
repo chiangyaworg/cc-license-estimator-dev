@@ -27,7 +27,7 @@ function openTab(evt, tabName) {
 
 // Set 'Estimator' as the default active tab on load
 document.addEventListener('DOMContentLoaded', () => {
-    // FIX: Call the openTab function directly with a null event 
+    // Call the openTab function directly with a null event 
     // and the default tab name to ensure the state is set correctly.
     openTab(null, 'Estimator'); 
 
@@ -136,18 +136,25 @@ function calculateLicenses() {
 
         if (posture_workload_sum > 200 || runtime_workload_sum > 200) {
             // Rule 1: If either one is more than 200
+            // Fix: Take the actual workload for BOTH licenses, even if only one hit the MOQ.
             postureLicense = posture_workload_sum;
             runtimeLicense = runtime_workload_sum;
             
         } else if (total_workload_sum > 200) {
-            // Rule 2: Both are <= 200, but total is > 200 (Ambiguous/circular rule)
-            postureLicense = runtime_workload_sum;
+            // Rule 2: Both are <= 200, but total is > 200
+            // This is the combined license pool scenario. We must honor the actual workloads, 
+            // but the rule from the prompt is based on a circular calculation:
+            // "Posture Security License Required: (total_workload_sum-posture_workload_sum), next line, Runtime Security License Required: runtime_workload_sum"
+            
+            // Following the math strictly as requested:
+            postureLicense = runtime_workload_sum; // (total_workload_sum - posture_workload_sum)
             runtimeLicense = runtime_workload_sum;
             
         } else if (total_workload_sum > 0) { 
             // Rule 3: Total is less than 200 (but must be greater than 0)
+            // Fix: Apply the 200 MOQ to the Runtime License only as per the original strict rule.
             runtimeLicense = 200; 
-            postureLicense = 0; 
+            postureLicense = 0; // Posture License is not triggered
         } else {
             postureLicense = 0;
             runtimeLicense = 0;
