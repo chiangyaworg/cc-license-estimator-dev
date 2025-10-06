@@ -192,4 +192,3 @@ function calculateLicenses() {
         resultsElement.innerHTML = resultString.join('\n');
     }
 }
-
