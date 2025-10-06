@@ -57,6 +57,8 @@ function calculateLicenses() {
         'saas-users': 1 / 10,                    // 10 SaaS Users = 1 Workload
         'container-images': 1 / 10,              // 10 container image scans = 1 Workload (beyond free quota)
     };
+    const MOQ = 200;
+    const ASM_MULTIPLIER = 1.25;
 
     // --- Get Input Values ---
     const inputs = {
@@ -83,7 +85,7 @@ function calculateLicenses() {
     const resultsElement = document.getElementById('results-section');
     resultsElement.innerHTML = ''; 
 
-    // --- Step 1: Calculate Workloads ---
+    // --- Step 1: Calculate Base Workloads (Before rounding/MOQ) ---
     const postureWorkloadUnits = 
         (inputs['cloud-buckets'] * RATIOS['cloud-buckets']) +
         (inputs['managed-cloud-database'] * RATIOS['managed-cloud-database']) +
@@ -97,15 +99,25 @@ function calculateLicenses() {
         (inputs['serverless-functions'] * RATIOS['serverless-functions']) +
         (inputs['container-images'] * RATIOS['container-images']);
 
-    const posture_workload_sum = Math.ceil(postureWorkloadUnits);
-    const runtime_workload_sum = Math.ceil(runtimeWorkloadUnits);
+    // --- Step 2: Apply Cloud ASM Multiplier to Workloads (FIX 1) ---
+    let finalPostureWorkload = postureWorkloadUnits;
+    let finalRuntimeWorkload = runtimeWorkloadUnits;
+    
+    if (features.cloudAsm) {
+        finalPostureWorkload = postureWorkloadUnits * ASM_MULTIPLIER;
+        finalRuntimeWorkload = runtimeWorkloadUnits * ASM_MULTIPLIER;
+    }
+
+    // Round up the final workloads
+    const posture_workload_sum = Math.ceil(finalPostureWorkload);
+    const runtime_workload_sum = Math.ceil(finalRuntimeWorkload);
     const developer_sum = inputs['developers'];
     const total_workload_sum = posture_workload_sum + runtime_workload_sum;
 
     let resultString = [];
     const coreSecuritySelected = features.posture || features.runtime;
 
-    // --- Step 2: Apply Logic based on Ticked Features ---
+    // --- Step 3: Check for Errors ---
     if (!features.posture && !features.runtime && !features.application && !features.cloudAsm) {
         resultsElement.innerHTML = '<span class="error">None of the features are chosen, please try again</span>';
         return;
@@ -116,17 +128,17 @@ function calculateLicenses() {
         return;
     }
 
-    // --- Determine Core Security License (Posture/Runtime) ---
+    // --- Step 4: Determine Core Security License (Posture/Runtime) ---
     let postureLicense = 0;
     let runtimeLicense = 0;
     
     if (features.posture && !features.runtime) {
         // Scenario: Only Posture Security is ticked
-        // Add runtime_workload_sum into postureLicense
+        // If Posture only, add runtime_workload_sum into postureLicense
         let effectivePostureWorkload = posture_workload_sum + runtime_workload_sum;
 
         if (effectivePostureWorkload > 0) {
-            postureLicense = Math.max(effectivePostureWorkload, 200);
+            postureLicense = Math.max(effectivePostureWorkload, MOQ);
         } else {
             postureLicense = 0;
         }
@@ -134,42 +146,34 @@ function calculateLicenses() {
     } else if (features.runtime || (features.posture && features.runtime)) {
         // Scenario: Runtime Security is ticked, or both Posture and Runtime are ticked
 
-        if (posture_workload_sum > 200 || runtime_workload_sum > 200) {
-            // Rule 1: If either one is more than 200
-            // Fix: Take the actual workload for BOTH licenses, even if only one hit the MOQ.
+        if (posture_workload_sum > MOQ || runtime_workload_sum > MOQ) {
+            // Rule 1: If either one is more than 200 (MOQ fulfilled on at least one side)
+            // FIX 2: Show the actual workload for BOTH. MOQ is NOT applied to the lower workload.
             postureLicense = posture_workload_sum;
             runtimeLicense = runtime_workload_sum;
             
-        } else if (total_workload_sum > 200) {
-            // Rule 2: Both are <= 200, but total is > 200
-            // This is the combined license pool scenario. We must honor the actual workloads, 
-            // but the rule from the prompt is based on a circular calculation:
-            // "Posture Security License Required: (total_workload_sum-posture_workload_sum), next line, Runtime Security License Required: runtime_workload_sum"
-            
-            // Following the math strictly as requested:
-            postureLicense = runtime_workload_sum; // (total_workload_sum - posture_workload_sum)
+        } else if (total_workload_sum > MOQ) {
+            // Rule 2: Both are <= 200, but total is > 200 (Combined low workload meets combined MOQ)
+            // Follow the prompt's ambiguous/circular rule:
+            postureLicense = runtime_workload_sum;
             runtimeLicense = runtime_workload_sum;
             
         } else if (total_workload_sum > 0) { 
             // Rule 3: Total is less than 200 (but must be greater than 0)
-            // Fix: Apply the 200 MOQ to the Runtime License only as per the original strict rule.
-            runtimeLicense = 200; 
-            postureLicense = 0; // Posture License is not triggered
+            // Set minimum license of 200 on Runtime
+            runtimeLicense = MOQ; 
+            postureLicense = 0; 
         } else {
+            // Total workload is 0
             postureLicense = 0;
             runtimeLicense = 0;
         }
     }
     
-    // --- Step 3: Apply Cloud ASM Multiplier (if selected) ---
-    if (features.cloudAsm) {
-        const multiplier = 1.25;
-        // Apply multiplier and round up the core licenses
-        postureLicense = Math.ceil(postureLicense * multiplier);
-        runtimeLicense = Math.ceil(runtimeLicense * multiplier);
-    }
 
-    // --- Step 4: Output Core Security Licenses ---
+    // --- Step 5: Output Licenses ---
+
+    // Core Licenses
     if (postureLicense > 0) {
         resultString.push(`Posture Security License Required: ${postureLicense}`);
     }
@@ -178,7 +182,7 @@ function calculateLicenses() {
     }
 
 
-    // --- Step 5: Application Security Add-on ---
+    // Application Security Add-on
     if (features.application && coreSecuritySelected) {
         const appSecLicense = developer_sum > 5 ? developer_sum : 5;
         resultString.push(`Application Security License Required: ${appSecLicense}`);
