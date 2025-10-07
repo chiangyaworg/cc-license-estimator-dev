@@ -47,7 +47,7 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Style for external links wrapped in a span, making them look like buttons */
+/* Style for generic action links (View Metering Guide) */
 .external-link-wrap a {
     display: inline-block;
     background-color: #4CAF50;
@@ -64,6 +64,36 @@ a:hover {
     background-color: #45a049;
     text-decoration: none;
 }
+
+/* NEW: GitHub Button Style */
+.github-button {
+    display: inline-flex;
+    align-items: center;
+    background-color: #333333; /* Dark gray for GitHub feel */
+    color: #ffffff;
+    border: 1px solid #555555;
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-decoration: none;
+    margin-top: 10px;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.github-button:hover {
+    background-color: #444444;
+    border-color: #888888;
+    text-decoration: none;
+}
+
+/* Placeholder for the GitHub icon - will use text/color if no icon font is included */
+.github-icon::before {
+    content: "🐙"; /* Use Octocat or a simple icon/emoji */
+    font-size: 1.2em;
+    margin-right: 8px;
+    line-height: 1;
+}
+
 
 /* --- Tab Styles --- */
 .tabs {
