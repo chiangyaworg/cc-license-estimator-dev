@@ -146,25 +146,31 @@ function calculateLicenses() {
     } else if (features.runtime || (features.posture && features.runtime)) {
         // Scenario: Runtime Security is ticked, or both Posture and Runtime are ticked
 
-        if (posture_workload_sum > MOQ || runtime_workload_sum > MOQ) {
-            // Rule 1: If either one is more than 200 (MOQ fulfilled on at least one side)
-            // FIX 2: Show the actual workload for BOTH. MOQ is NOT applied to the lower workload.
+        if (posture_workload_sum >= MOQ && runtime_workload_sum >= MOQ) {
+            // Rule 1: If each are more than 200 (MOQ fulfilled both side)
             postureLicense = posture_workload_sum;
             runtimeLicense = runtime_workload_sum;
             
-        } else if (total_workload_sum > MOQ) {
-            // Rule 2: Both are <= 200, but total is > 200 (Combined low workload meets combined MOQ)
-            // Follow the prompt's ambiguous/circular rule:
-            postureLicense = runtime_workload_sum;
+        } else if ((posture_workload_sum < MOQ && runtime_workload_sum < MOQ) && posture_workload_sum > 0 && runtime_workload_sum > 0) {
+            // Rule 2: If both are lower than 200, either one needs to fulfill MOQ
+            if (runtime_workload_sum >= (MOQ/2)){
+                runtimeLicense = MOQ;
+                postureLicense = total_workload_sum - MOQ;
+            }
+            else {
+                runtimeLicense = runtime_workload_sum;
+                postureLicense = MOQ;
+            }
+        } else if (posture_workload_sum >= MOQ && runtime_workload_sum < MOQ){
+            // Rule 3: Posture fulfill MOQ
+            postureLicense = posture_workload_sum;
             runtimeLicense = runtime_workload_sum;
-            
-        } else if (total_workload_sum > 0) { 
-            // Rule 3: Total is less than 200 (but must be greater than 0)
-            // Set minimum license of 200 on Runtime
-            runtimeLicense = MOQ; 
-            postureLicense = 0; 
+        } else if (posture_workload_sum < MOQ && runtime_workload_sum >= MOQ){
+            // Rule 4: Runtime fulfill MOQ
+            postureLicense = posture_workload_sum;
+            runtimeLicense = runtime_workload_sum;
         } else {
-            // Total workload is 0
+            // Total workload is 0, something is wrong
             postureLicense = 0;
             runtimeLicense = 0;
         }
