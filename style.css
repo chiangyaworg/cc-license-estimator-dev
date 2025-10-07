@@ -5,7 +5,6 @@ body {
     color: #ffffff;
     margin: 0;
     padding: 20px;
-    /* FIX: Explicitly set vertical scroll for consistency and overflow handling */
     overflow-y: scroll; 
 }
 .container {
@@ -36,12 +35,41 @@ p {
     color: #cccccc;
 }
 
+/* --- Hyperlink Styles --- */
+a {
+    color: #4CAF50; /* Standard link color */
+    text-decoration: none; /* Remove underline by default */
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: #66BB6A;
+    text-decoration: underline;
+}
+
+/* Style for external links wrapped in a span, making them look like buttons */
+.external-link-wrap a {
+    display: inline-block;
+    background-color: #4CAF50;
+    color: #ffffff;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-decoration: none;
+    margin-left: 10px;
+    transition: background-color 0.2s;
+}
+
+.external-link-wrap a:hover {
+    background-color: #45a049;
+    text-decoration: none;
+}
+
 /* --- Tab Styles --- */
 .tabs {
     border-bottom: none;
     margin-bottom: 0; 
     display: flex;
-    /* FIX: Hide overflow to ensure no scrollbar appears on the tab bar itself */
     overflow-x: hidden; 
     overflow-y: hidden; 
     background-color: #252526; 
@@ -86,7 +114,7 @@ p {
     display: block; 
 }
 
-/* --- Content Styles (mostly retained) --- */
+/* --- Content Styles --- */
 .section-title {
     color: #4CAF50;
     margin-top: 20px;
