@@ -37,7 +37,7 @@ p {
 
 /* --- Hyperlink Styles --- */
 a {
-    color: #4CAF50; /* Standard link color */
+    color: #4CAF50; /* Standard link color (Your accent green) */
     text-decoration: none; /* Remove underline by default */
     transition: color 0.2s;
 }
@@ -47,51 +47,36 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Style for generic action links (View Metering Guide) */
-.external-link-wrap a {
-    display: inline-block;
-    background-color: #4CAF50;
-    color: #ffffff;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-weight: bold;
-    text-decoration: none;
-    margin-left: 10px;
-    transition: background-color 0.2s;
-}
+/* REMOVED: Style for generic action links (View Metering Guide) */
 
-.external-link-wrap a:hover {
-    background-color: #45a049;
-    text-decoration: none;
-}
-
-/* NEW: GitHub Button Style */
+/* NEW: GitHub Button Style - Now styled as a simple green text link */
 .github-button {
-    display: inline-flex;
-    align-items: center;
-    background-color: #333333; /* Dark gray for GitHub feel */
-    color: #ffffff;
-    border: 1px solid #555555;
-    padding: 8px 15px;
-    border-radius: 6px;
-    font-weight: bold;
-    text-decoration: none;
-    margin-top: 10px;
-    transition: background-color 0.2s, border-color 0.2s;
+    /* Reset all button styles */
+    display: inline;
+    background: none;
+    border: none;
+    padding: 0;
+    font-weight: normal;
+    
+    /* Apply green text style */
+    color: #4CAF50; 
+    text-decoration: underline; 
+    margin-left: 0;
+    margin-top: 0;
 }
 
 .github-button:hover {
-    background-color: #444444;
-    border-color: #888888;
-    text-decoration: none;
+    color: #66BB6A;
+    text-decoration: underline;
 }
 
-/* Placeholder for the GitHub icon - will use text/color if no icon font is included */
+/* Remove icon placeholder styling */
+.github-icon {
+    display: none; /* Hide the icon element */
+}
+/* Ensure the icon content is also removed if it was being used */
 .github-icon::before {
-    content: "🐙"; /* Use Octocat or a simple icon/emoji */
-    font-size: 1.2em;
-    margin-right: 8px;
-    line-height: 1;
+    content: ""; 
 }
 
 
