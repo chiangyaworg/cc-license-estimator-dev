@@ -95,15 +95,15 @@ function calculateLicenses() {
         (inputs['managed-cloud-database'] * RATIOS['managed-cloud-database']) +
         (inputs['dbaas-tb-stored'] * RATIOS['dbaas-tb-stored']) +
         (inputs['saas-users'] * RATIOS['saas-users']) +
-        (inputs['unmanaged-assets'] * RATIOS['unmanaged-assets']);
+        (inputs['unmanaged-assets'] * RATIOS['unmanaged-assets']) +
+        (inputs['container-images'] * RATIOS['container-images']);
     
     // Runtime Workloads
     const runtimeWorkloadUnits = 
         (inputs['vms-not-running-containers'] * RATIOS['vms-not-running-containers']) +
         (inputs['vms-running-containers'] * RATIOS['vms-running-containers']) +
         (inputs['caas-managed-containers'] * RATIOS['caas-managed-containers']) +
-        (inputs['serverless-functions'] * RATIOS['serverless-functions']) +
-        (inputs['container-images'] * RATIOS['container-images']);
+        (inputs['serverless-functions'] * RATIOS['serverless-functions']);
     
     // No ASM Multiplier logic needed here, so final workloads are the rounded base workloads
     const posture_workload_sum = Math.ceil(postureWorkloadUnits);
