@@ -1,3 +1,44 @@
+// Function to handle tab switching
+function openTab(evt, tabName) {
+    var i, tabcontent, tablinks;
+
+    // Get all elements with class="tab-content" and hide them
+    tabcontent = document.getElementsByClassName("tab-content");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+        tabcontent[i].classList.remove("active-tab");
+    }
+
+    // Get all elements with class="tab-button" and remove the "active" class
+    tablinks = document.getElementsByClassName("tab-button");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+    }
+
+    // Show the current tab, and add an "active" class to the button that opened the tab
+    document.getElementById(tabName).style.display = "block";
+    document.getElementById(tabName).classList.add("active-tab");
+    
+    // Add 'active' class to the current target (the button) only if the event exists
+    if (evt) {
+        evt.currentTarget.classList.add("active");
+    }
+}
+
+// Set 'Estimator' as the default active tab on load
+document.addEventListener('DOMContentLoaded', () => {
+    // Call the openTab function directly with a null event 
+    // and the default tab name to ensure the state is set correctly.
+    openTab(null, 'Estimator'); 
+
+    // Manually set the active class on the first button (Estimator) since the event is null
+    const defaultButton = document.querySelector('.tab-button');
+    if (defaultButton) {
+        defaultButton.classList.add('active');
+    }
+});
+
+// Attach calculation function to the form submit event
 document.getElementById('estimator-form').addEventListener('submit', function(e) {
     e.preventDefault();
     calculateLicenses();
@@ -15,9 +56,10 @@ function calculateLicenses() {
         'dbaas-tb-stored': 1,                    // 1 TB Stored = 1 Workload
         'saas-users': 1 / 10,                    // 10 SaaS Users = 1 Workload
         'container-images': 1 / 10,              // 10 container image scans = 1 Workload (beyond free quota)
-        'unmanaged-assets': 1 / 4                // 4 Unmanaged Assets = 1 Workload
+        'unmanaged-assets': 1 / 4                // 4 Unmanaged Assets = 1 Workload (0.25)
     };
-
+    const MOQ = 200;
+    
     // --- Get Input Values ---
     const inputs = {
         'vms-not-running-containers': parseInt(document.getElementById('vms-not-running-containers').value) || 0,
@@ -38,68 +80,59 @@ function calculateLicenses() {
         posture: document.getElementById('feature-posture').checked,
         runtime: document.getElementById('feature-runtime').checked,
         application: document.getElementById('feature-application').checked,
-        cloudAsm: document.getElementById('feature-cloud-asm').checked
     };
 
     const resultsElement = document.getElementById('results-section');
-    resultsElement.innerHTML = ''; // Clear previous results
+    resultsElement.innerHTML = ''; 
 
     // --- Step 1: Calculate Workloads ---
+    
+    const unmanagedWorkloadUnits = (inputs['unmanaged-assets'] * RATIOS['unmanaged-assets']);
 
-    // Posture Workloads
     const postureWorkloadUnits = 
         (inputs['cloud-buckets'] * RATIOS['cloud-buckets']) +
         (inputs['managed-cloud-database'] * RATIOS['managed-cloud-database']) +
         (inputs['dbaas-tb-stored'] * RATIOS['dbaas-tb-stored']) +
-        (inputs['saas-users'] * RATIOS['saas-users']);
+        (inputs['saas-users'] * RATIOS['saas-users']) +
+        unmanagedWorkloadUnits; 
     
-    // Runtime Workloads
     const runtimeWorkloadUnits = 
         (inputs['vms-not-running-containers'] * RATIOS['vms-not-running-containers']) +
         (inputs['vms-running-containers'] * RATIOS['vms-running-containers']) +
         (inputs['caas-managed-containers'] * RATIOS['caas-managed-containers']) +
         (inputs['serverless-functions'] * RATIOS['serverless-functions']) +
         (inputs['container-images'] * RATIOS['container-images']);
-
-    // Round up to the nearest whole number
+    
     const posture_workload_sum = Math.ceil(postureWorkloadUnits);
     const runtime_workload_sum = Math.ceil(runtimeWorkloadUnits);
+    
     const developer_sum = inputs['developers'];
-    const unmanaged_assets_sum = Math.ceil(inputs['unmanaged-assets'] * RATIOS['unmanaged-assets']);
     const total_workload_sum = posture_workload_sum + runtime_workload_sum;
 
     let resultString = [];
-
-    // Flag to check if any core feature is selected (Posture or Runtime)
     const coreSecuritySelected = features.posture || features.runtime;
 
-    // --- Step 2: Apply Logic based on Ticked Features ---
-
-    // A. Check for no features ticked
-    if (!features.posture && !features.runtime && !features.application && !features.cloudAsm) {
+    // --- Step 2: Check for Errors ---
+    if (!features.posture && !features.runtime && !features.application) {
         resultsElement.innerHTML = '<span class="error">None of the features are chosen, please try again</span>';
         return;
     }
 
-    // B. Check for Application Security alone
     if (features.application && !features.posture && !features.runtime) {
         resultsElement.innerHTML = '<span class="error">Application Security can only be added as add-ons, on top of Posture Security or Runtime Security</span>';
         return;
     }
 
-    // --- Determine Core Security License (Posture/Runtime) ---
+    // --- Step 3: Determine Core Security License (Posture/Runtime) ---
     let postureLicense = 0;
     let runtimeLicense = 0;
     
     if (features.posture && !features.runtime) {
-        // Scenario: Only Posture Security is ticked
-        
-        // NEW LOGIC: Add runtime_workload_sum to the posture workload
+        // Scenario: Only Posture Security is ticked (Existing Logic)
         let effectivePostureWorkload = posture_workload_sum + runtime_workload_sum;
 
         if (effectivePostureWorkload > 0) {
-            // If total effective workload is > 0, the license is the max of the effective workload sum or 200.
-            postureLicense = Math.max(effectivePostureWorkload, 200);
+            postureLicense = Math.max(effectivePostureWorkload, MOQ);
         } else {
             postureLicense = 0;
         }
@@ -107,22 +140,49 @@ function calculateLicenses() {
     } else if (features.runtime || (features.posture && features.runtime)) {
         // Scenario: Runtime Security is ticked, or both Posture and Runtime are ticked
 
-        if (posture_workload_sum > 200 || runtime_workload_sum > 200) {
-            // Rule 1: If either one is more than 200
+        // Rule 1, 3, 4: At least one side fulfills MOQ (>= 200)
+        if (posture_workload_sum >= MOQ || runtime_workload_sum >= MOQ){
+            // If MOQ is met on one side, both sides take their actual workload.
             postureLicense = posture_workload_sum;
             runtimeLicense = runtime_workload_sum;
             
-        } else if (total_workload_sum > 200) {
-            // Rule 2: Both are <= 200, but total is > 200
-            // Follow the prompt's ambiguous/circular rule:
-            postureLicense = runtime_workload_sum;
-            runtimeLicense = runtime_workload_sum;
+        // NEW COST-OPTIMIZATION LOGIC (When both are below MOQ)
+        } else if (posture_workload_sum > 0 || runtime_workload_sum > 0) {
             
-        } else if (total_workload_sum > 0) { 
-            // Rule 3: Total is less than 200 (but must be greater than 0)
-            // "Runtime Security License Required: 200"
-            runtimeLicense = 200; 
-            postureLicense = 0; 
+            // Calculate the total required consumption units
+            // Runtime needs runtime_workload_sum licenses (cost 2)
+            // Posture needs posture_workload_sum licenses (cost 1)
+            
+            // --- Determine the allocation of the MOQ (200) ---
+            
+            // 1. Try meeting the MOQ with Posture (cheapest option for minimum coverage)
+            let post_moq_posture_only = Math.max(posture_workload_sum, MOQ);
+            let post_moq_runtime_only = runtime_workload_sum;
+            let cost_option_1 = (post_moq_posture_only * 1) + (post_moq_runtime_only * 2);
+
+            // 2. Try meeting the MOQ with Runtime (most powerful, covers Posture)
+            let runtime_moq_runtime_only = Math.max(runtime_workload_sum, MOQ);
+            
+            // When Runtime fulfills MOQ, the excessive part of the Runtime license covers Posture.
+            let excess_runtime_license = Math.max(0, runtime_moq_runtime_only - runtime_workload_sum);
+            
+            // Posture license consumption is reduced by the excess Runtime license quantity
+            let post_moq_posture_covered = Math.max(0, posture_workload_sum - excess_runtime_license);
+            
+            let cost_option_2 = (post_moq_posture_covered * 1) + (runtime_moq_runtime_only * 2);
+            
+            
+            // --- Compare and Allocate ---
+            if (cost_option_1 <= cost_option_2) {
+                // Option 1 is cheaper or equal: Posture takes the MOQ
+                postureLicense = Math.max(posture_workload_sum, MOQ);
+                runtimeLicense = runtime_workload_sum;
+            } else {
+                // Option 2 is cheaper: Runtime takes the MOQ
+                postureLicense = post_moq_posture_covered;
+                runtimeLicense = runtime_moq_runtime_only;
+            }
+
         } else {
             // Total workload is 0
             postureLicense = 0;
@@ -130,21 +190,10 @@ function calculateLicenses() {
         }
     }
     
-    // --- Step 3: Apply Cloud ASM Multiplier (if selected) and add ASM license line ---
-    let asmLicenseLine = '';
-    if (features.cloudAsm) {
-        const multiplier = 1.25;
-        // Apply multiplier and round up the core licenses
-        postureLicense = Math.ceil(postureLicense * multiplier);
-        runtimeLicense = Math.ceil(runtimeLicense * multiplier);
-        
-        // Save the Cloud ASM license line separately
-        if (unmanaged_assets_sum > 0) {
-            asmLicenseLine = `Cloud ASM License Required: ${unmanaged_assets_sum}`;
-        }
-    }
 
-    // --- Step 4: Output Core Security Licenses ---
+    // --- Step 4: Output Licenses ---
+
+    // Core Licenses
     if (postureLicense > 0) {
         resultString.push(`Posture Security License Required: ${postureLicense}`);
     }
@@ -153,16 +202,10 @@ function calculateLicenses() {
     }
 
 
-    // --- Step 5: Application Security Add-on ---
+    // Application Security Add-on
     if (features.application && coreSecuritySelected) {
-        // AppSec license is min 5 or the developer sum
         const appSecLicense = developer_sum > 5 ? developer_sum : 5;
         resultString.push(`Application Security License Required: ${appSecLicense}`);
-    }
-
-    // --- Step 6: Add Cloud ASM License Line to the end if it exists ---
-    if (asmLicenseLine) {
-        resultString.push(asmLicenseLine);
     }
 
 
