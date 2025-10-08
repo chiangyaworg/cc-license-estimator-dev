@@ -103,6 +103,7 @@ function calculateLicenses() {
         (inputs['serverless-functions'] * RATIOS['serverless-functions']) +
         (inputs['container-images'] * RATIOS['container-images']);
     
+    // Round up the final workloads
     const posture_workload_sum = Math.ceil(postureWorkloadUnits);
     const runtime_workload_sum = Math.ceil(runtimeWorkloadUnits);
     
@@ -110,6 +111,7 @@ function calculateLicenses() {
     const total_workload_sum = posture_workload_sum + runtime_workload_sum;
 
     let resultString = [];
+    let explanationString = ""; // NEW: Variable to hold explanations
     const coreSecuritySelected = features.posture || features.runtime;
 
     // --- Step 2: Check for Errors ---
@@ -128,11 +130,14 @@ function calculateLicenses() {
     let runtimeLicense = 0;
     
     if (features.posture && !features.runtime) {
-        // Scenario: Only Posture Security is ticked (Existing Logic)
+        // Scenario: Only Posture Security is ticked
         let effectivePostureWorkload = posture_workload_sum + runtime_workload_sum;
 
         if (effectivePostureWorkload > 0) {
             postureLicense = Math.max(effectivePostureWorkload, MOQ);
+            if (effectivePostureWorkload < MOQ) {
+                explanationString = `Total Posture workload (${effectivePostureWorkload}) is lower than MOQ (${MOQ}), hence MOQ is required to be proposed.`;
+            }
         } else {
             postureLicense = 0;
         }
@@ -146,43 +151,49 @@ function calculateLicenses() {
             postureLicense = posture_workload_sum;
             runtimeLicense = runtime_workload_sum;
             
-        // NEW COST-OPTIMIZATION LOGIC (When both are below MOQ)
+        // Rule 2: Both are below MOQ, but at least one is > 0
         } else if (posture_workload_sum > 0 || runtime_workload_sum > 0) {
             
-            // Calculate the total required consumption units
-            // Runtime needs runtime_workload_sum licenses (cost 2)
-            // Posture needs posture_workload_sum licenses (cost 1)
-            
-            // --- Determine the allocation of the MOQ (200) ---
-            
-            // 1. Try meeting the MOQ with Posture (cheapest option for minimum coverage)
-            let post_moq_posture_only = Math.max(posture_workload_sum, MOQ);
-            let post_moq_runtime_only = runtime_workload_sum;
-            let cost_option_1 = (post_moq_posture_only * 1) + (post_moq_runtime_only * 2);
-
-            // 2. Try meeting the MOQ with Runtime (most powerful, covers Posture)
-            let runtime_moq_runtime_only = Math.max(runtime_workload_sum, MOQ);
-            
-            // When Runtime fulfills MOQ, the excessive part of the Runtime license covers Posture.
-            let excess_runtime_license = Math.max(0, runtime_moq_runtime_only - runtime_workload_sum);
-            
-            // Posture license consumption is reduced by the excess Runtime license quantity
-            let post_moq_posture_covered = Math.max(0, posture_workload_sum - excess_runtime_license);
-            
-            let cost_option_2 = (post_moq_posture_covered * 1) + (runtime_moq_runtime_only * 2);
-            
-            
-            // --- Compare and Allocate ---
-            if (cost_option_1 <= cost_option_2) {
-                // Option 1 is cheaper or equal: Posture takes the MOQ
-                postureLicense = Math.max(posture_workload_sum, MOQ);
+            // Sub-rule 2.1: Total is > MOQ (Combined low workload meets combined MOQ)
+            if (total_workload_sum > MOQ) {
+                // The prompt rule: Posture: runtime_workload_sum, Runtime: runtime_workload_sum
+                postureLicense = runtime_workload_sum; 
                 runtimeLicense = runtime_workload_sum;
-            } else {
-                // Option 2 is cheaper: Runtime takes the MOQ
-                postureLicense = post_moq_posture_covered;
-                runtimeLicense = runtime_moq_runtime_only;
+                
+                // No MOQ explanation needed, as consumption exceeds MOQ.
             }
+            
+            // Sub-rule 2.2: Total is <= MOQ (Apply MOQ and allocate based on cost optimization)
+            else {
+                // Determine the most cost-effective way to meet the MOQ.
+                
+                // 1. Cost Option 1: Posture takes the MOQ (Cheapest base license)
+                let post_moq_posture_only = Math.max(posture_workload_sum, MOQ);
+                let post_moq_runtime_only = runtime_workload_sum;
+                let cost_option_1 = (post_moq_posture_only * 1) + (post_moq_runtime_only * 2);
 
+                // 2. Cost Option 2: Runtime takes the MOQ (Most feature-rich license)
+                let runtime_moq_runtime_only = Math.max(runtime_workload_sum, MOQ);
+                
+                // Calculate Posture consumption reduction due to Runtime excess
+                let excess_runtime_license = Math.max(0, runtime_moq_runtime_only - runtime_workload_sum);
+                let post_moq_posture_covered = Math.max(0, posture_workload_sum - excess_runtime_license);
+                
+                let cost_option_2 = (post_moq_posture_covered * 1) + (runtime_moq_runtime_only * 2);
+
+                // Compare and Allocate
+                if (cost_option_1 <= cost_option_2) {
+                    // Option 1 is cheaper or equal: Posture takes the MOQ
+                    postureLicense = Math.max(posture_workload_sum, MOQ);
+                    runtimeLicense = runtime_workload_sum;
+                    explanationString = `Total workload is lower than MOQ (${MOQ}). License optimization suggests proposing MOQ on the Posture license.`;
+                } else {
+                    // Option 2 is cheaper: Runtime takes the MOQ
+                    postureLicense = post_moq_posture_covered;
+                    runtimeLicense = runtime_moq_runtime_only;
+                    explanationString = `Total workload is lower than MOQ (${MOQ}). License optimization suggests proposing MOQ on the Runtime license.`;
+                }
+            }
         } else {
             // Total workload is 0
             postureLicense = 0;
@@ -192,6 +203,12 @@ function calculateLicenses() {
     
 
     // --- Step 4: Output Licenses ---
+
+    // Prepend explanation if one exists
+    if (explanationString) {
+        resultString.push(explanationString);
+        resultString.push("---");
+    }
 
     // Core Licenses
     if (postureLicense > 0) {
