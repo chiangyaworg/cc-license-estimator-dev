@@ -105,14 +105,14 @@ function calculateLicenses() {
         (inputs['managed-cloud-database'] * RATIOS['managed-cloud-database']) +
         (inputs['dbaas-tb-stored'] * RATIOS['dbaas-tb-stored']) +
         (inputs['saas-users'] * RATIOS['saas-users']) +
-        unmanagedWorkloadUnits; 
+        unmanagedWorkloadUnits + 
+        containerImageWorkloadUnits; 
     
     const runtimeWorkloadUnits = 
         (inputs['vms-not-running-containers'] * RATIOS['vms-not-running-containers']) +
         (inputs['vms-running-containers'] * RATIOS['vms-running-containers']) +
         (inputs['caas-managed-containers'] * RATIOS['caas-managed-containers']) +
-        (inputs['serverless-functions'] * RATIOS['serverless-functions']) +
-        (inputs['container-images'] * RATIOS['container-images']);
+        (inputs['serverless-functions'] * RATIOS['serverless-functions']);
     
     const posture_workload_sum = Math.ceil(postureWorkloadUnits);
     const runtime_workload_sum = Math.ceil(runtimeWorkloadUnits);
