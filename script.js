@@ -89,6 +89,17 @@ function calculateLicenses() {
     
     const unmanagedWorkloadUnits = (inputs['unmanaged-assets'] * RATIOS['unmanaged-assets']);
 
+    // --- Container Image Quota Logic ---
+    const totalDeployedWorkloads = inputs['vms-not-running-containers'] + inputs['vms-running-containers'] + (inputs['caas-managed-containers'] * RATIOS['caas-managed-containers']) ;
+    const CONTAINER_IMAGE_QUOTA = totalDeployedWorkloads * 10;
+    let imagesForBilling = inputs['container-images'];
+
+    if (totalDeployedWorkloads > 0 && inputs['container-images'] > 0) {
+        imagesForBilling = Math.max(0, inputs['container-images'] - CONTAINER_IMAGE_QUOTA);
+    }
+    const containerImageWorkloadUnits = imagesForBilling * RATIOS['container-images'];
+    // --- End Container Image Quota Logic ---
+
     const postureWorkloadUnits = 
         (inputs['cloud-buckets'] * RATIOS['cloud-buckets']) +
         (inputs['managed-cloud-database'] * RATIOS['managed-cloud-database']) +
@@ -121,6 +132,12 @@ function calculateLicenses() {
 
     if (features.application && !features.posture && !features.runtime) {
         resultsElement.innerHTML = '<span class="error">Application Security can only be added as add-ons, on top of Posture Security or Runtime Security</span>';
+        return;
+    }
+
+    // NEW ERROR CHECK: Application Security must be selected if developers > 0
+    if (developer_sum > 0 && !features.application) {
+        resultsElement.innerHTML = '<span class="error">Application Security is not chosen but developers quantity is more than 0. Please select Application Security or set Developers to 0.</span>';
         return;
     }
 
