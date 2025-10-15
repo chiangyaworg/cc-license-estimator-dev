@@ -160,52 +160,28 @@ function calculateLicenses() {
 
     } else if (features.runtime || (features.posture && features.runtime)) {
         // Scenario: Runtime Security is ticked, or both Posture and Runtime are ticked
+        
+        // --- ALLOCATION LOGIC (MOQ must be met by Runtime) ---
 
-        // Rule 1, 3, 4: At least one side fulfills MOQ (>= 200)
-        if (posture_workload_sum >= MOQ || runtime_workload_sum >= MOQ){
-            // If MOQ is met on one side, both sides take their actual workload.
-            postureLicense = posture_workload_sum;
-            runtimeLicense = runtime_workload_sum;
-            
-        // NEW COST-OPTIMIZATION LOGIC (When both are below MOQ)
-        } else if (posture_workload_sum > 0 || runtime_workload_sum > 0) {
-            
-            // --- Determine the allocation of the MOQ (200) ---
-            
-            // 1. Try meeting the MOQ with Posture (Cost 1)
-            let post_moq_posture_only = Math.max(posture_workload_sum, MOQ);
-            let post_moq_runtime_only = runtime_workload_sum;
-            let cost_option_1 = (post_moq_posture_only * 1) + (post_moq_runtime_only * 2);
-
-            // 2. Try meeting the MOQ with Runtime (Cost 2, covers Posture consumption)
-            let runtime_moq_runtime_only = Math.max(runtime_workload_sum, MOQ);
-            
-            // If runtime license is 200 (MOQ) and runtime workload is 10, excess is 190.
-            let excess_runtime_license = Math.max(0, runtime_moq_runtime_only - runtime_workload_sum);
-            
-            // Posture license consumption is reduced by the excess Runtime license quantity
-            let post_moq_posture_covered = Math.max(0, posture_workload_sum - excess_runtime_license);
-            
-            let cost_option_2 = (post_moq_posture_covered * 1) + (runtime_moq_runtime_only * 2);
-            
-            
-            // --- Compare and Allocate ---
-            if (cost_option_1 <= cost_option_2) {
-                // Option 1 is cheaper or equal: Posture takes the MOQ
-                postureLicense = Math.max(posture_workload_sum, MOQ);
-                runtimeLicense = runtime_workload_sum;
-                explanationString = `Total workload is lower than MOQ (${MOQ}). Cost optimization suggests proposing MOQ on the Posture license.`;
-            } else {
-                // Option 2 is cheaper: Runtime takes the MOQ
-                postureLicense = post_moq_posture_covered;
-                runtimeLicense = runtime_moq_runtime_only;
-                explanationString = `Total workload is lower than MOQ (${MOQ}). Cost optimization suggests proposing MOQ on the Runtime license.`;
+        // Runtime License is always max of its workload or MOQ
+        if (runtime_workload_sum > 0) {
+            runtimeLicense = Math.max(runtime_workload_sum, MOQ);
+            if (runtime_workload_sum < MOQ) {
+                explanationString = `Runtime Security is selected. Runtime workload (${runtime_workload_sum}) is below the MOQ, hence the license quantity is set to ${MOQ}.`;
             }
+        } else if (features.runtime) {
+             // If runtime is checked but runtime_workload_sum is 0, we still assume MOQ applies if any other license is requested (e.g., posture is also ticked)
+            runtimeLicense = MOQ;
+            explanationString = `Runtime Security is selected. Runtime workload is 0, hence the MOQ of ${MOQ} is applied.`;
+        }
+        
+        // Posture License is always its actual workload (since Runtime MOQ is now met)
+        // Note: The previous cost optimization rules (Rule 2) are now implicitly handled/replaced by this strict Runtime MOQ rule.
+        postureLicense = posture_workload_sum;
 
-        } else {
-            // Total workload is 0
-            postureLicense = 0;
-            runtimeLicense = 0;
+        if (runtimeLicense === MOQ && runtime_workload_sum === 0 && posture_workload_sum === 0 && !features.posture) {
+            // Only Runtime is ticked, and workloads are 0. Clear explanation for minimum license.
+            explanationString = `Runtime Security is selected. All workloads are 0, hence the MOQ of ${MOQ} is applied.`;
         }
     }
     
